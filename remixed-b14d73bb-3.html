@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinical Hours Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6f2ea;--paper-2:#fffdf8;--ink:#21302e;--ink-soft:#5a6864;--line:#e3ddd0;
+  --sage:#4f7a64;--sage-deep:#3a5c4b;--sage-soft:#e7efe8;--clay:#b06a44;--clay-soft:#f3e6dc;
+  --gold:#c69a3e;--danger:#a5453a;--shadow:0 1px 2px rgba(33,48,46,.05),0 8px 24px -12px rgba(33,48,46,.18);--radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background-image:radial-gradient(circle at 12% -5%,rgba(79,122,100,.07),transparent 42%),radial-gradient(circle at 92% 0%,rgba(176,106,68,.06),transparent 40%)}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 18px 80px}
+h1,h2,h3{font-family:"Fraunces",Georgia,serif;font-weight:600;letter-spacing:-.01em;line-height:1.1}
+.tnum{font-variant-numeric:tabular-nums}
+header.app{margin-bottom:22px}
+.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);font-weight:600}
+header.app h1{font-size:clamp(26px,5vw,38px);margin-top:6px}
+header.app p{color:var(--ink-soft);margin-top:8px;max-width:60ch;font-size:15px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:22px 0}
+.card{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.stat{padding:18px}
+.stat .lab{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.stat .big{font-family:"Fraunces",serif;font-size:32px;font-weight:600;margin-top:6px;line-height:1}
+.stat .big small{font-size:15px;color:var(--ink-soft);font-weight:500}
+.stat .sub{font-size:13px;color:var(--ink-soft);margin-top:8px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:12px}
+.bar>i{display:block;height:100%;border-radius:99px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.bar.sage>i{background:linear-gradient(90deg,var(--sage),var(--sage-deep))}
+.bar.clay>i{background:linear-gradient(90deg,#c8855c,var(--clay))}
+.bar.gold>i{background:linear-gradient(90deg,#d8b25a,var(--gold))}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
+.pill.ok{background:var(--sage-soft);color:var(--sage-deep)}
+.pill.warn{background:var(--clay-soft);color:var(--clay)}
+/* tabs */
+.tabs{display:flex;gap:4px;background:var(--paper-2);border:1px solid var(--line);border-radius:99px;padding:5px;margin-bottom:18px;box-shadow:var(--shadow);overflow-x:auto}
+.tabs button{flex:1;min-width:max-content;border:0;background:transparent;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--ink-soft);padding:9px 13px;border-radius:99px;cursor:pointer;transition:.18s;white-space:nowrap}
+.tabs button.active{background:var(--sage);color:#fff;box-shadow:0 2px 8px -2px rgba(58,92,75,.5)}
+.panel{display:none}
+.panel.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+/* forms */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.formcard{padding:22px}
+.formcard h2{font-size:20px;margin-bottom:4px}
+.hint{color:var(--ink-soft);font-size:13.5px;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.03em}
+.field label .opt{font-weight:400;text-transform:none;letter-spacing:0;color:#9aa39e}
+input,select,textarea{width:100%;font-family:inherit;font-size:15px;color:var(--ink);background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sage);box-shadow:0 0 0 3px var(--sage-soft)}
+textarea{resize:vertical;min-height:60px}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.presets button{flex:1;min-width:58px;border:1px solid var(--line);background:var(--paper-2);font-family:inherit;font-weight:600;font-size:14px;color:var(--ink);padding:9px;border-radius:10px;cursor:pointer;transition:.15s}
+.presets button:hover{border-color:var(--sage)}
+.presets button.sel{background:var(--sage);color:#fff;border-color:var(--sage)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;font-weight:600;font-size:14px;border:0;border-radius:10px;padding:11px 16px;cursor:pointer;transition:.18s}
+.btn.primary{background:var(--sage);color:#fff;box-shadow:0 3px 12px -4px rgba(58,92,75,.5);width:100%}
+.btn.primary:hover{background:var(--sage-deep)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--sage);color:var(--sage-deep)}
+.btn.clay{background:var(--clay);color:#fff;width:100%}
+.btn.clay:hover{filter:brightness(.92)}
+.btn.sm{padding:7px 12px;font-size:13px;width:auto}
+.row-btns{display:flex;gap:10px}
+/* history / lists */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper-2)}
+.seg button{border:0;background:transparent;font-family:inherit;font-weight:600;font-size:13px;color:var(--ink-soft);padding:8px 12px;cursor:pointer}
+.seg button.active{background:var(--sage);color:#fff}
+.slist{display:flex;flex-direction:column;gap:8px}
+.srow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.dot{width:9px;height:9px;border-radius:99px;flex:none}
+.dot.client{background:var(--sage)}
+.dot.supervision{background:var(--clay)}
+.srow .date{font-size:12px;color:var(--ink-soft);font-weight:600}
+.srow .meta{font-size:14px;margin-top:2px}
+.srow .meta b{font-weight:600}
+.srow .tags{font-size:12px;color:var(--ink-soft);margin-top:3px}
+.hrs{text-align:right;font-family:"Fraunces",serif;font-size:17px;font-weight:600}
+.acts{display:flex;gap:5px;margin-top:5px;justify-content:flex-end}
+.icon{border:0;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-soft);padding:3px 7px;border-radius:7px}
+.icon:hover{background:var(--sage-soft);color:var(--sage-deep)}
+.icon.del:hover{background:#f6e3e0;color:var(--danger)}
+.empty{text-align:center;padding:48px 20px;color:var(--ink-soft)}
+.empty .em{font-family:"Fraunces",serif;font-size:20px;color:var(--ink);margin-bottom:6px}
+/* client roster */
+.clist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ccard{padding:16px;cursor:pointer;transition:.18s;position:relative}
+.ccard:hover{border-color:var(--sage);box-shadow:0 2px 16px -6px rgba(79,122,100,.3)}
+.ccard .cname{font-family:"Fraunces",serif;font-size:18px;font-weight:600}
+.ccard .cmeta{font-size:13px;color:var(--ink-soft);margin-top:4px;line-height:1.5}
+.ccard .cbadge{position:absolute;top:14px;right:14px;font-family:"Fraunces",serif;font-size:14px;font-weight:600;color:var(--sage-deep);background:var(--sage-soft);border-radius:8px;padding:4px 9px}
+.ccard .cacts{display:flex;gap:6px;margin-top:12px}
+/* profile overlay */
+#profile-overlay{display:none;position:fixed;inset:0;background:rgba(33,48,46,.45);z-index:100;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}
+#profile-overlay.open{display:flex}
+#profile-box{background:var(--paper-2);border-radius:18px;width:100%;max-width:700px;box-shadow:0 20px 60px -10px rgba(0,0,0,.35);animation:fade .25s ease}
+.prof-head{padding:22px 22px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.prof-head h2{font-size:24px}
+.prof-head .close{border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--ink-soft);line-height:1;padding:2px 6px;border-radius:8px}
+.prof-head .close:hover{background:var(--sage-soft);color:var(--sage-deep)}
+.prof-body{padding:16px 22px 22px}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.pstat{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.pstat .pn{font-family:"Fraunces",serif;font-size:22px;font-weight:600}
+.pstat .pl{font-size:11px;color:var(--ink-soft);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
+.divider{border:0;border-top:1px solid var(--line);margin:16px 0}
+/* ref */
+.ref{padding:22px}
+.ref h2{font-size:20px;margin-bottom:12px}
+.ref ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.ref li{display:flex;gap:10px;font-size:14px;line-height:1.5}
+.ref li .n{flex:none;width:26px;height:26px;border-radius:8px;background:var(--sage-soft);color:var(--sage-deep);font-weight:700;font-size:13px;display:grid;place-items:center}
+.note{background:var(--clay-soft);border:1px solid #e8d3c4;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:#6e4a33;margin-top:16px}
+.note b{color:var(--clay)}
+.src{font-size:12px;color:var(--ink-soft);margin-top:14px;line-height:1.5}
+.src a{color:var(--sage-deep)}
+.datacard{padding:22px}
+.datacard h2{font-size:20px;margin-bottom:4px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:99px;font-size:14px;font-weight:500;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.3s;z-index:200}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:680px){
+  .grid2{grid-template-columns:1fr}
+  .srow{grid-template-columns:auto 1fr}
+  .srow .right{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);padding-top:8px;margin-top:4px}
+  .acts{margin-top:0}
+  .prof-stats{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="kicker">LMSW &rarr; LCSW &middot; New York</div>
+    <h1>Clinical Hours Ledger</h1>
+    <p>Your personal tracker for supervised clinical experience. Data saves to your browser — private, no account needed.</p>
+  </header>
+  <div id="root"></div>
+</div>
+
+<!-- Client profile overlay -->
+<div id="profile-overlay">
+  <div id="profile-box"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ── Storage ── */
+const KEYS = { sessions:'chl_sessions_v1', settings:'chl_settings_v1', clients:'chl_clients_v1' };
+const DEFAULTS = { startDate:'2025-10-01', goalContact:2000, goalSupervision:100, minMonths:36, maxMonths:72 };
+const load = k => { try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+
+let sessions = load(KEYS.sessions)||[];
+let settings = { ...DEFAULTS, ...(load(KEYS.settings)||{}) };
+let clients  = load(KEYS.clients)||[];   // [{id, code, age, diagnosis, modality, notes, createdAt}]
+
+let editingSessionId = null, editingClientId = null;
+let filter = 'all', activeTab = 'log';
+window._logType = 'client';
+
+/* ── Helpers ── */
+const $ = s => document.querySelector(s);
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtH(m){ const h=m/60; return (Math.round(h*10)/10).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:1}); }
+function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function prettyDate(iso){ if(!iso)return''; return new Date(iso+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+function monthsBetween(aISO){ const a=new Date(aISO+'T00:00:00'),b=new Date(); let m=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth()); m+=(b.getDate()-a.getDate())/30.44; return Math.max(0,m); }
+function clientSessions(cid){ return sessions.filter(s=>s.type==='client'&&(String(s.clientRosterId)===String(cid)||s.clientId===clientById(cid)?.code)); }
+function clientById(id){ return clients.find(c=>c.id===id); }
+function uid(){ return Date.now()+Math.random().toString(36).slice(2,6); }
+
+/* ── Main render ── */
+function render(){
+  const contactM = sessions.filter(s=>s.type==='client').reduce((a,s)=>a+(+s.minutes||0),0);
+  const supM     = sessions.filter(s=>s.type==='supervision').reduce((a,s)=>a+(+s.minutes||0),0);
+  const contactH = contactM/60, supH = supM/60;
+  const elapsed  = monthsBetween(settings.startDate);
+  const cPct = Math.min(100,contactH/settings.goalContact*100);
+  const sPct = Math.min(100,supH/settings.goalSupervision*100);
+  const tPct = Math.min(100,elapsed/settings.minMonths*100);
+  let proj = '';
+  if(contactH>0&&elapsed>0.3){
+    const pace=contactH/elapsed, rem=Math.max(0,settings.goalContact-contactH);
+    if(rem<=0){ proj='Contact-hour goal reached! 🎉'; }
+    else if(pace>0){ const eta=new Date(); eta.setMonth(eta.getMonth()+Math.ceil(rem/pace)); proj=`At ~${fmtH(rem/pace*60*pace)} hrs/mo, on track for ${eta.toLocaleDateString(undefined,{month:'short',year:'numeric'})}.`; }
+  }
+
+  $('#root').innerHTML = `
+  <section class="stats">
+    <div class="card stat">
+      <div class="lab">Direct client contact</div>
+      <div class="big tnum">${(Math.round(contactH*10)/10).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:1})}<small> / ${settings.goalContact.toLocaleString()} hrs</small></div>
+      <div class="bar sage"><i style="width:${cPct}%"></i></div>
+      <div class="sub">${contactH>=settings.goalContact?'<span class="pill ok">Goal met</span>':`${(Math.round(Math.max(0,settings.goalContact-contactH)*10)/10)} hrs to go &middot; ${Math.round(cPct)}%`}</div>
+    </div>
+    <div class="card stat">
+      <div class="lab">Clinical supervision</div>
+      <div class="big tnum">${(Math.round(supH*10)/10).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:1})}<small> / ${settings.goalSupervision} hrs</small></div>
+      <div class="bar clay"><i style="width:${sPct}%"></i></div>
+      <div class="sub">${supH>=settings.goalSupervision?'<span class="pill ok">Goal met</span>':`${(Math.round(Math.max(0,settings.goalSupervision-supH)*10)/10)} hrs to go &middot; ${Math.round(sPct)}%`}</div>
+    </div>
+    <div class="card stat">
+      <div class="lab">Time accrued</div>
+      <div class="big tnum">${Math.floor(elapsed)}<small> / ${settings.minMonths} mo min</small></div>
+      <div class="bar gold"><i style="width:${tPct}%"></i></div>
+      <div class="sub">${elapsed>=settings.minMonths?'<span class="pill ok">Minimum met</span>':`Window: ${settings.minMonths}–${settings.maxMonths} months`}</div>
+    </div>
+    <div class="card stat">
+      <div class="lab">Active clients</div>
+      <div class="big tnum">${clients.length}<small> roster</small></div>
+      <div class="sub">${sessions.length} total sessions logged${proj?' &middot; '+proj:''}</div>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button data-tab="log"     class="${activeTab==='log'?'active':''}">＋ Log session</button>
+    <button data-tab="clients" class="${activeTab==='clients'?'active':''}">Clients</button>
+    <button data-tab="history" class="${activeTab==='history'?'active':''}">History</button>
+    <button data-tab="data"    class="${activeTab==='data'?'active':''}">Settings &amp; backup</button>
+    <button data-tab="ref"     class="${activeTab==='ref'?'active':''}">NY requirements</button>
+  </nav>
+
+  <div class="panel ${activeTab==='log'?'active':''}"     id="p-log">${logPanel()}</div>
+  <div class="panel ${activeTab==='clients'?'active':''}" id="p-clients">${clientsPanel()}</div>
+  <div class="panel ${activeTab==='history'?'active':''}" id="p-history">${historyPanel()}</div>
+  <div class="panel ${activeTab==='data'?'active':''}"    id="p-data">${dataPanel()}</div>
+  <div class="panel ${activeTab==='ref'?'active':''}"     id="p-ref">${refPanel()}</div>
+  `;
+  wire();
+}
+
+/* ── Log panel ── */
+function logPanel(){
+  const ed = editingSessionId ? sessions.find(x=>x.id===editingSessionId) : null;
+  const t  = ed ? ed.type : window._logType;
+  return `
+  <div class="grid2">
+    <div class="card formcard">
+      <div class="seg" style="margin-bottom:16px">
+        <button data-ltype="client"     class="${t==='client'?'active':''}">Client session</button>
+        <button data-ltype="supervision" class="${t==='supervision'?'active':''}">Supervision</button>
+      </div>
+      ${t==='client' ? clientSessionForm(ed) : supForm(ed)}
+    </div>
+    <div class="card ref" style="align-self:start">
+      <h2>Quick notes</h2>
+      <ul>
+        <li><span class="n">i</span><div>Select a client from your roster and their details auto-fill. Add new clients from the <b>Clients</b> tab.</div></li>
+        <li><span class="n">✓</span><div>Only <b>diagnosis, psychotherapy, and assessment-based treatment planning</b> count toward the 2,000 hours.</div></li>
+        <li><span class="n">⏱</span><div>Use the preset buttons or type any session length in minutes.</div></li>
+        <li><span class="n">✎</span><div>Edit or delete any entry from the <b>History</b> tab.</div></li>
+      </ul>
+    </div>
+  </div>`;
+}
+
+function clientSessionForm(ed){
+  const m  = ed ? ed.minutes : '';
+  const ps = v => String(m)===String(v) ? 'sel' : '';
+  const clientOpts = clients.map(c=>`<option value="${esc(c.id)}" ${ed&&ed.clientRosterId===c.id?'selected':''}>${esc(c.code)}${c.age?` (age ${c.age})`:''}</option>`).join('');
+  return `
+  <h2>${ed?'Edit client session':'Log a client session'}</h2>
+  <p class="hint">Direct client contact counts toward your 2,000 hours.</p>
+  <form id="cform">
+    <div class="grid2">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${ed?ed.date:todayISO()}" required></div>
+      <div class="field"><label>Client</label>
+        <select name="clientRosterId" id="clientSelect">
+          <option value="">— select or type below —</option>
+          ${clientOpts}
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Client code <span class="opt">(or type a one-off code)</span></label>
+      <input name="clientId" id="clientIdInput" maxlength="20" placeholder="e.g. J.M. or C-014" value="${ed?esc(ed.clientId):''}">
+    </div>
+    <div class="field">
+      <label>Session length</label>
+      <div class="presets">
+        <button type="button" data-min="30" class="${ps(30)}">30 min</button>
+        <button type="button" data-min="45" class="${ps(45)}">45 min</button>
+        <button type="button" data-min="60" class="${ps(60)}">60 min</button>
+      </div>
+      <input type="number" name="minutes" min="1" max="600" step="1" placeholder="minutes" value="${m}" required>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Modality</label>
+        <select name="modality" id="modalitySelect">
+          ${['Individual','Group','Family','Couple','Collateral'].map(o=>`<option ${ed&&ed.modality===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Client age <span class="opt">(optional)</span></label>
+        <input type="number" name="age" id="ageInput" min="0" max="120" placeholder="e.g. 14" value="${ed&&ed.age!=null?ed.age:''}">
+      </div>
+    </div>
+    <div class="field"><label>Experience category</label>
+      <select name="category">${['Psychotherapy','Diagnosis','Assessment-based treatment planning','Other'].map(o=>`<option ${ed&&ed.category===o?'selected':(!ed&&o==='Psychotherapy'?'selected':'')}>${o}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Notes <span class="opt">(optional, non-identifying)</span></label>
+      <textarea name="notes" maxlength="280" placeholder="e.g. CBT, anxiety; school-based">${ed?esc(ed.notes):''}</textarea>
+    </div>
+    <div class="row-btns">
+      <button type="submit" class="btn primary">${ed?'Update session':'Add session'}</button>
+      ${ed?'<button type="button" id="canceledit" class="btn ghost">Cancel</button>':''}
+    </div>
+  </form>`;
+}
+
+function supForm(ed){
+  return `
+  <h2>${ed?'Edit supervision':'Log clinical supervision'}</h2>
+  <p class="hint">In-person individual or group clinical supervision — 100 hours required.</p>
+  <form id="sform">
+    <div class="grid2">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${ed?ed.date:todayISO()}" required></div>
+      <div class="field"><label>Length (minutes)</label><input type="number" name="minutes" min="1" max="600" step="1" placeholder="e.g. 60" value="${ed?ed.minutes:''}" required></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Type</label>
+        <select name="modality">${['Individual','Group'].map(o=>`<option ${ed&&ed.modality===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Supervisor <span class="opt">(optional)</span></label>
+        <input name="supervisor" maxlength="40" placeholder="name / initials" value="${ed?esc(ed.supervisor):''}">
+      </div>
+    </div>
+    <div class="field"><label>Notes <span class="opt">(optional)</span></label>
+      <textarea name="notes" maxlength="280" placeholder="topics, cases reviewed">${ed?esc(ed.notes):''}</textarea>
+    </div>
+    <div class="row-btns">
+      <button type="submit" class="btn clay">${ed?'Update supervision':'Add supervision'}</button>
+      ${ed?'<button type="button" id="canceledit" class="btn ghost">Cancel</button>':''}
+    </div>
+  </form>`;
+}
+
+/* ── Clients panel ── */
+function clientsPanel(){
+  const ed = editingClientId ? clients.find(c=>c.id===editingClientId) : null;
+  const roster = clients.length ? `<div class="clist">${clients.map(ccard).join('')}</div>` :
+    `<div class="empty"><div class="em">No clients yet</div>Add your first client using the form.</div>`;
+  return `
+  <div class="grid2" style="align-items:start">
+    <div class="card formcard">
+      <h2>${ed?'Edit client':'Add a client'}</h2>
+      <p class="hint">Clients you add here will appear in the session log dropdown.</p>
+      <form id="clientform">
+        <div class="field"><label>Client code / ID</label>
+          <input name="code" maxlength="20" placeholder="e.g. J.M. or C-014" value="${ed?esc(ed.code):''}" required>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Age <span class="opt">(optional)</span></label>
+            <input type="number" name="age" min="0" max="120" placeholder="e.g. 16" value="${ed&&ed.age!=null?ed.age:''}">
+          </div>
+          <div class="field"><label>Usual modality</label>
+            <select name="modality">${['Individual','Group','Family','Couple','Collateral'].map(o=>`<option ${ed&&ed.modality===o?'selected':''}>${o}</option>`).join('')}</select>
+          </div>
+        </div>
+        <div class="field"><label>Diagnosis / presenting concern <span class="opt">(optional)</span></label>
+          <input name="diagnosis" maxlength="80" placeholder="e.g. Anxiety, depression" value="${ed?esc(ed.diagnosis):''}">
+        </div>
+        <div class="field"><label>Notes <span class="opt">(optional, non-identifying)</span></label>
+          <textarea name="notes" maxlength="400" placeholder="treatment approach, context, goals…">${ed?esc(ed.notes):''}</textarea>
+        </div>
+        <div class="row-btns">
+          <button type="submit" class="btn primary">${ed?'Update client':'Save client'}</button>
+          ${ed?'<button type="button" id="cancelclient" class="btn ghost">Cancel</button>':''}
+        </div>
+      </form>
+    </div>
+    <div>
+      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:17px">Roster <span style="font-size:14px;color:var(--ink-soft);font-weight:500">(${clients.length})</span></h3>
+      </div>
+      ${roster}
+    </div>
+  </div>`;
+}
+
+function ccard(c){
+  const sess = clientSessions(c.id);
+  const totalM = sess.reduce((a,s)=>a+(+s.minutes||0),0);
+  return `
+  <div class="card ccard" data-profile="${c.id}">
+    <div class="cbadge">${fmtH(totalM)} hr</div>
+    <div class="cname">${esc(c.code)}</div>
+    <div class="cmeta">
+      ${c.age?`Age ${c.age} &middot; `:''}${c.modality||''}${c.diagnosis?`<br>${esc(c.diagnosis)}`:''}
+      <br>${sess.length} session${sess.length===1?'':'s'}
+    </div>
+    <div class="cacts" onclick="event.stopPropagation()">
+      <button class="btn ghost sm" data-editclient="${c.id}">Edit</button>
+      <button class="btn ghost sm del" data-delclient="${c.id}" style="color:var(--danger);border-color:#e8cfca">Delete</button>
+    </div>
+  </div>`;
+}
+
+/* ── History panel ── */
+function historyPanel(){
+  let rows = filter==='all' ? [...sessions] : sessions.filter(r=>r.type===filter);
+  rows.sort((a,b)=>b.date.localeCompare(a.date)||(b.id>a.id?1:-1));
+  const list = rows.length ? rows.map(srow).join('') :
+    `<div class="empty"><div class="em">Nothing here yet</div>${sessions.length?'No sessions match this filter.':'Logged sessions will appear here.'}</div>`;
+  return `
+  <div class="card" style="padding:18px">
+    <div class="toolbar">
+      <div class="seg">
+        <button data-filter="all"        class="${filter==='all'?'active':''}">All</button>
+        <button data-filter="client"     class="${filter==='client'?'active':''}">Client</button>
+        <button data-filter="supervision" class="${filter==='supervision'?'active':''}">Supervision</button>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn ghost sm" id="csvbtn">Export CSV</button>
+    </div>
+    <div class="slist">${list}</div>
+  </div>`;
+}
+
+function srow(r){
+  const isC = r.type==='client';
+  const label = isC
+    ? `${r.modality||'Session'} &middot; <b>${esc(r.clientId)||'—'}</b>${r.age!=null&&r.age!==''?` &middot; age ${r.age}`:''}`
+    : `${r.modality||''} supervision${r.supervisor?` &middot; <b>${esc(r.supervisor)}</b>`:''}`;
+  const tags = isC ? `${r.category||''}${r.notes?' &middot; '+esc(r.notes):''}` : esc(r.notes)||'&nbsp;';
+  const profileBtn = isC && r.clientRosterId
+    ? `<button class="icon" data-profile="${r.clientRosterId}">Profile</button>` : '';
+  return `
+  <div class="srow">
+    <span class="dot ${r.type}"></span>
+    <div>
+      <div class="date">${prettyDate(r.date)}</div>
+      <div class="meta">${label}</div>
+      <div class="tags">${tags}</div>
+    </div>
+    <div class="right">
+      <div class="hrs tnum">${fmtH(r.minutes)}<span style="font-size:11px;color:var(--ink-soft);font-weight:500"> hr</span></div>
+      <div class="acts">
+        ${profileBtn}
+        <button class="icon" data-editsession="${r.id}">Edit</button>
+        <button class="icon del" data-delsession="${r.id}">Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Data panel ── */
+function dataPanel(){
+  return `
+  <div class="grid2">
+    <div class="card datacard">
+      <h2>Targets</h2>
+      <p class="hint">Pre-filled with New York's LCSW requirements.</p>
+      <form id="setform">
+        <div class="field"><label>Experience start date <span class="opt">(your LMSW date)</span></label>
+          <input type="date" name="startDate" value="${settings.startDate}">
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Contact-hour goal</label><input type="number" name="goalContact" min="1" value="${settings.goalContact}"></div>
+          <div class="field"><label>Supervision-hour goal</label><input type="number" name="goalSupervision" min="1" value="${settings.goalSupervision}"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Minimum months</label><input type="number" name="minMonths" min="1" value="${settings.minMonths}"></div>
+          <div class="field"><label>Maximum months</label><input type="number" name="maxMonths" min="1" value="${settings.maxMonths}"></div>
+        </div>
+        <button type="submit" class="btn primary">Save targets</button>
+      </form>
+    </div>
+    <div class="card datacard" style="align-self:start">
+      <h2>Your data</h2>
+      <p class="hint">Everything saves automatically to your browser. Each person who uses this tool has their own completely private copy. Back up regularly in case you clear your browser cache.</p>
+      <div class="field"><button class="btn ghost" id="jsonexp" style="width:100%">Download backup (.json)</button></div>
+      <div class="field"><label>Restore from backup</label><input type="file" id="jsonimp" accept="application/json,.json"></div>
+      <div class="field"><button class="btn ghost" id="csvbtn2" style="width:100%">Export sessions as .csv</button></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:8px 0 14px">
+      <button class="btn ghost" id="wipe" style="width:100%;color:var(--danger);border-color:#e8cfca">Erase all my data</button>
+    </div>
+  </div>`;
+}
+
+/* ── Ref panel ── */
+function refPanel(){
+  return `
+  <div class="card ref">
+    <h2>New York LCSW — what you're working toward</h2>
+    <ul>
+      <li><span class="n">1</span><div><b>2,000 client-contact hours.</b> Direct client contact in diagnosis, psychotherapy, and assessment-based treatment planning only.</div></li>
+      <li><span class="n">2</span><div><b>100 hours of clinical supervision.</b> In-person individual or group, by a NY-licensed LCSW, psychologist, or psychiatrist.</div></li>
+      <li><span class="n">3</span><div><b>36 to 72 months.</b> At least three years, no more than six. Hours count only <b>after</b> your LMSW or limited permit.</div></li>
+      <li><span class="n">4</span><div><b>File Form 6 early.</b> NYSED recommends submitting your Plan for Supervised Experience before the experience begins.</div></li>
+    </ul>
+    <div class="note"><b>Privacy first.</b> Use codes or initials only — never client names. This is a personal tally, not a HIPAA-secured system or an official NYSED submission.</div>
+    <div class="src">Always confirm current rules at <a href="https://www.op.nysed.gov/professions/licensed-clinical-social-worker/license-requirements" target="_blank" rel="noopener">op.nysed.gov</a>.</div>
+  </div>`;
+}
+
+/* ── Profile overlay ── */
+function openProfile(cid){
+  const c = clientById(cid); if(!c) return;
+  const sess = clientSessions(cid).sort((a,b)=>b.date.localeCompare(a.date));
+  const totalM = sess.reduce((a,s)=>a+(+s.minutes||0),0);
+  const firstDate = sess.length ? prettyDate(sess[sess.length-1].date) : '—';
+  const lastDate  = sess.length ? prettyDate(sess[0].date) : '—';
+  const rows = sess.length ? sess.map(s=>`
+    <div class="srow" style="grid-template-columns:auto 1fr auto">
+      <span class="dot client"></span>
+      <div>
+        <div class="date">${prettyDate(s.date)}</div>
+        <div class="meta">${esc(s.modality||'Session')}${s.category?' &middot; '+esc(s.category):''}</div>
+        <div class="tags">${s.notes?esc(s.notes):'&nbsp;'}</div>
+      </div>
+      <div class="hrs tnum">${fmtH(s.minutes)}<span style="font-size:11px;color:var(--ink-soft);font-weight:500"> hr</span></div>
+    </div>`).join('') :
+    `<div class="empty"><div class="em">No sessions yet</div>Log a session and select this client.</div>`;
+
+  $('#profile-box').innerHTML = `
+  <div class="prof-head">
+    <div>
+      <div class="kicker">Client profile</div>
+      <h2>${esc(c.code)}</h2>
+    </div>
+    <button class="close" id="closeprofile">&times;</button>
+  </div>
+  <div class="prof-body">
+    <div class="prof-stats">
+      <div class="pstat"><div class="pn tnum">${fmtH(totalM)}</div><div class="pl">Hours</div></div>
+      <div class="pstat"><div class="pn tnum">${sess.length}</div><div class="pl">Sessions</div></div>
+      <div class="pstat"><div class="pn tnum">${sess.length?fmtH(totalM/sess.length*60):'—'}</div><div class="pl">Avg hrs</div></div>
+    </div>
+    <div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:4px">
+      ${c.age?`Age: <b style="color:var(--ink)">${c.age}</b> &middot; `:''}
+      Modality: <b style="color:var(--ink)">${c.modality||'—'}</b>
+      ${c.diagnosis?` &middot; ${esc(c.diagnosis)}`:''}
+    </div>
+    ${c.notes?`<div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:4px">${esc(c.notes)}</div>`:''}
+    <div style="font-size:12px;color:var(--ink-soft)">First session: ${firstDate} &middot; Most recent: ${lastDate}</div>
+    <hr class="divider">
+    <h3 style="font-size:15px;margin-bottom:10px">Session history</h3>
+    <div class="slist">${rows}</div>
+  </div>`;
+  $('#profile-overlay').classList.add('open');
+  $('#closeprofile').onclick = closeProfile;
+}
+function closeProfile(){ $('#profile-overlay').classList.remove('open'); }
+$('#profile-overlay').onclick = e => { if(e.target===$('#profile-overlay')) closeProfile(); };
+
+/* ── Event wiring ── */
+function wire(){
+  // tabs
+  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+    activeTab=b.dataset.tab;
+    if(activeTab!=='log') editingSessionId=null;
+    if(activeTab!=='clients') editingClientId=null;
+    render();
+  });
+
+  // session type toggle
+  document.querySelectorAll('[data-ltype]').forEach(b=>b.onclick=()=>{ window._logType=b.dataset.ltype; editingSessionId=null; render(); });
+
+  // preset buttons
+  document.querySelectorAll('.presets button').forEach(b=>b.onclick=()=>{
+    const inp=$('#cform [name=minutes]'); if(inp) inp.value=b.dataset.min;
+    document.querySelectorAll('.presets button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+  });
+
+  // client roster select auto-fill
+  const cs=$('#clientSelect');
+  if(cs) cs.onchange=()=>{
+    const c=clientById(cs.value);
+    const ci=$('#clientIdInput'), mi=$('#modalitySelect'), ai=$('#ageInput');
+    if(c){ if(ci) ci.value=c.code; if(mi) mi.value=c.modality||'Individual'; if(ai&&c.age!=null) ai.value=c.age; }
+    else { if(ci) ci.value=''; }
+  };
+
+  // session forms
+  const cf=$('#cform'); if(cf) cf.onsubmit=e=>{ e.preventDefault(); submitSession('client', Object.fromEntries(new FormData(cf))); };
+  const sf=$('#sform'); if(sf) sf.onsubmit=e=>{ e.preventDefault(); submitSession('supervision', Object.fromEntries(new FormData(sf))); };
+  const ce=$('#canceledit'); if(ce) ce.onclick=()=>{ editingSessionId=null; render(); };
+
+  // client form
+  const clf=$('#clientform'); if(clf) clf.onsubmit=e=>{ e.preventDefault(); submitClient(Object.fromEntries(new FormData(clf))); };
+  const cc=$('#cancelclient'); if(cc) cc.onclick=()=>{ editingClientId=null; render(); };
+
+  // client roster cards → profile
+  document.querySelectorAll('.ccard[data-profile]').forEach(el=>el.onclick=()=>openProfile(el.dataset.profile));
+  document.querySelectorAll('[data-editclient]').forEach(b=>b.onclick=()=>{ editingClientId=b.dataset.editclient; render(); });
+  document.querySelectorAll('[data-delclient]').forEach(b=>b.onclick=()=>{
+    if(!confirm('Remove this client from the roster? Their logged sessions will remain in History.')) return;
+    clients=clients.filter(c=>c.id!==b.dataset.delclient); save(KEYS.clients,clients); toast('Client removed'); render();
+  });
+
+  // history controls
+  document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{ filter=b.dataset.filter; render(); });
+  document.querySelectorAll('[data-profile]').forEach(b=>{
+    if(b.tagName==='BUTTON') b.onclick=()=>openProfile(b.dataset.profile);
+  });
+  document.querySelectorAll('[data-editsession]').forEach(b=>b.onclick=()=>{
+    editingSessionId=b.dataset.editsession;
+    window._logType=sessions.find(x=>x.id===editingSessionId)?.type||'client';
+    activeTab='log'; render();
+  });
+  document.querySelectorAll('[data-delsession]').forEach(b=>b.onclick=()=>{
+    sessions=sessions.filter(x=>x.id!==b.dataset.delsession); save(KEYS.sessions,sessions); toast('Session deleted'); render();
+  });
+
+  // settings
+  const setf=$('#setform'); if(setf) setf.onsubmit=e=>{
+    e.preventDefault(); const d=Object.fromEntries(new FormData(setf));
+    settings={startDate:d.startDate||DEFAULTS.startDate,goalContact:+d.goalContact||DEFAULTS.goalContact,goalSupervision:+d.goalSupervision||DEFAULTS.goalSupervision,minMonths:+d.minMonths||DEFAULTS.minMonths,maxMonths:+d.maxMonths||DEFAULTS.maxMonths};
+    save(KEYS.settings,settings); toast('Targets saved'); render();
+  };
+
+  // backup / export
+  const cb=$('#csvbtn');  if(cb)  cb.onclick=exportCSV;
+  const cb2=$('#csvbtn2');if(cb2) cb2.onclick=exportCSV;
+  const je=$('#jsonexp'); if(je)  je.onclick=exportJSON;
+  const ji=$('#jsonimp'); if(ji)  ji.onchange=importJSON;
+  const wp=$('#wipe');    if(wp)  wp.onclick=wipe;
+}
+
+/* ── Submit handlers ── */
+function submitSession(type, d){
+  const minutes=+d.minutes; if(!minutes||minutes<=0){ toast('Enter a valid session length'); return; }
+  const roster = type==='client' ? clients.find(c=>c.id===d.clientRosterId) : null;
+  const rec = {
+    id: editingSessionId||uid(), type,
+    date: d.date||todayISO(), minutes,
+    modality: d.modality||'',
+    notes: (d.notes||'').trim(),
+    clientId: type==='client' ? (d.clientId||roster?.code||'').trim() : '',
+    clientRosterId: type==='client' ? (d.clientRosterId||null) : null,
+    age: type==='client'&&d.age!==''&&d.age!=null ? +d.age : null,
+    category: type==='client' ? (d.category||'Psychotherapy') : '',
+    supervisor: type==='supervision' ? (d.supervisor||'').trim() : ''
+  };
+  if(editingSessionId){ sessions=sessions.map(s=>s.id===editingSessionId?rec:s); editingSessionId=null; }
+  else { sessions.push(rec); }
+  save(KEYS.sessions,sessions);
+  toast(type==='client'?'Client session logged ✓':'Supervision logged ✓');
+  render();
+}
+
+function submitClient(d){
+  if(!(d.code||'').trim()){ toast('Enter a client code'); return; }
+  const rec = {
+    id: editingClientId||uid(),
+    code: d.code.trim(),
+    age: d.age!==''&&d.age!=null ? +d.age : null,
+    modality: d.modality||'Individual',
+    diagnosis: (d.diagnosis||'').trim(),
+    notes: (d.notes||'').trim(),
+    createdAt: editingClientId ? (clientById(editingClientId)?.createdAt||new Date().toISOString()) : new Date().toISOString()
+  };
+  if(editingClientId){ clients=clients.map(c=>c.id===editingClientId?rec:c); editingClientId=null; }
+  else { clients.push(rec); }
+  save(KEYS.clients,clients); toast(editingClientId?'Client updated':'Client added ✓'); render();
+}
+
+/* ── Import / export ── */
+function dl(name,content,mime){ const b=new Blob([content],{type:mime}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u); }
+function exportCSV(){
+  if(!sessions.length){ toast('No sessions to export'); return; }
+  const h=['Date','Type','Client code','Age','Minutes','Hours','Modality','Category','Supervisor','Notes'];
+  const rows=[...sessions].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>[s.date,s.type,s.clientId,s.age??'',s.minutes,(s.minutes/60).toFixed(2),s.modality,s.category,s.supervisor,s.notes].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  dl('clinical-hours.csv',[h.join(','),...rows].join('\n'),'text/csv'); toast('CSV downloaded');
+}
+function exportJSON(){
+  dl('clinical-hours-backup.json',JSON.stringify({version:2,exported:new Date().toISOString(),settings,clients,sessions},null,2),'application/json'); toast('Backup downloaded');
+}
+function importJSON(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      const inSessions=Array.isArray(data)?data:(data.sessions||[]);
+      const inClients=data.clients||[];
+      const haveS=new Set(sessions.map(s=>s.id)), haveC=new Set(clients.map(c=>c.id));
+      let addedS=0,addedC=0;
+      inSessions.forEach(s=>{ if(s&&s.id&&!haveS.has(s.id)){ sessions.push(s); addedS++; } });
+      inClients.forEach(c=>{ if(c&&c.id&&!haveC.has(c.id)){ clients.push(c); addedC++; } });
+      if(data.settings) settings={...DEFAULTS,...data.settings};
+      save(KEYS.sessions,sessions); save(KEYS.clients,clients); save(KEYS.settings,settings);
+      toast(`Restored — ${addedS} session${addedS===1?'':'s'}, ${addedC} client${addedC===1?'':'s'} added`); render();
+    }catch(err){ toast('Could not read that file'); }
+  };
+  r.readAsText(file); e.target.value='';
+}
+function wipe(){
+  if(!confirm('Erase ALL data including your client roster? This cannot be undone.')) return;
+  sessions=[]; clients=[]; settings={...DEFAULTS};
+  save(KEYS.sessions,sessions); save(KEYS.clients,clients); save(KEYS.settings,settings);
+  toast('All data erased'); render();
+}
+
+render();
+</script>
+</body>
+</html>
