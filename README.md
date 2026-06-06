@@ -1,4 +1,4 @@
-# clinical-hours-ledger
+# Clinical Hours Ledger
 
 A free, browser-based tracker for LMSW-to-LCSW supervised clinical hours in New York State — with a built-in client roster, session logging, and progress dashboard.
 
